@@ -67,10 +67,3 @@ Após a execução do comando teremos os seguintes containers em execução:
 
 Quando a aplicação for acessada através da URL http://localhost:8080teremos o seguinte resultado:
 
-![Página de teste](https://github.com/nossadiretiva/imagens/blob/master/teste_wordpress.png?raw=true)
-
-## Banco de dados
-
-Após a execução da configuração inicial do Wordpress o banco de dados ao qual ele está conectado fica como mostrado na imagem abaixo:
-
-![Banco de dados da aplicação](https://github.com/nossadiretiva/imagens/blob/master/database_wordpress.png?raw=true)
