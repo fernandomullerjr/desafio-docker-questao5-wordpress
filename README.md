@@ -1,4 +1,11 @@
-# Desafio Wordpress
+
+# Questão 05 - Desafio Wordpress
+
+Chegou um cliente pra você que possui todas as suas aplicações em data centers e a gestão dessas aplicações está cada vez mais complexa então pra iniciar um plano de
+gestão unificada e migração pra um ambiente cloud, as aplicações serão migradas pra containers. E hoje você precisa iniciar esse processo com um projeto piloto, o portal de
+conteúdos da empresa construido em Wordpress. Então hoje sua missão é criar esse ambiente wordpress pronto para a equipe de publicidade começar a popular.
+
+## Wordpress
 
 O Wordpress é uma aplicação CMS (Content Management System) que é usado para administrar sites, blogs, lojas virtuais, portais de notícia, áreas de membros e outros tipos de página.
 
@@ -61,9 +68,17 @@ Para realização dos testes com script configurado no arquivo `docker-compose`,
 > Esse comando é para criar todos os objetos configurados no arquivo `docker-compose`.
 Após a execução do comando teremos os seguintes containers em execução:
 
-    CONTAINER ID   IMAGE             COMMAND                  CREATED          STATUS          PORTS                    NAMES
-    ef329f97e641   wordpress:5.8.3   "docker-entrypoint.s…"   54 minutes ago   Up 53 minutes   0.0.0.0:8080->80/tcp     wordpress-app
-    7b01c2d6d511   mariadb:10.7.1    "docker-entrypoint.s…"   54 minutes ago   Up 54 minutes   0.0.0.0:3306->3306/tcp   wordpress-mariadb
+~~~~bash
+fernando@debian10x64:~/cursos/kubedev/aula56-Desafio-Docker/questao5/desafio-docker-questao5-wordpress$ docker ps
+CONTAINER ID   IMAGE                 COMMAND                  CREATED          STATUS          PORTS                                       NAMES
+c45c076c36d7   wordpress:5.8.3       "docker-entrypoint.s…"   15 minutes ago   Up 15 minutes   0.0.0.0:8080->80/tcp, :::8080->80/tcp       wordpress-app
+eddf86294f5f   mariadb:10.7.1        "docker-entrypoint.s…"   21 minutes ago   Up 15 minutes   0.0.0.0:3306->3306/tcp, :::3306->3306/tcp   wordpress-mariadb
+4e0cc1b8a495   portainer/portainer   "/portainer"             5 days ago       Up 2 hours      0.0.0.0:9000->9000/tcp, :::9000->9000/tcp   frosty_easley
+fernando@debian10x64:~/cursos/kubedev/aula56-Desafio-Docker/questao5/desafio-docker-questao5-wordpress$
+~~~~
 
-Quando a aplicação for acessada através da URL http://localhost:8080teremos o seguinte resultado:
+A aplicação pode ser acessada através da URL:
+http://localhost:8080
+
+
 
