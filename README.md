@@ -15,49 +15,62 @@ Para criação da aplicação (site e banco de dados) vamos utilizar o *Docker C
 
 Foi criado, dentro do diretório, um arquivo chamado `docker-compose` contendo o script *yaml* de criação dos objetos necessários para execução da aplicação e do banco de dados, como mostrado abaixo:
 
-    version: '3.8'
-    
-    services:
-      wordpress:
-        container_name: wordpress-app
-        image: wordpress:5.8.3
-        restart: always
-        depends_on:
-          - db
-        ports:
-          - 8080:80
-        networks:
-          - wordpress_network
-        volumes:
-          - wordpress_volume:/var/www/html
-        environment:
-          WORDPRESS_DB_HOST: wordpress-mariadb
-          WORDPRESS_DB_USER: wordpressuser
-          WORDPRESS_DB_PASSWORD: wordpresspwd
-          WORDPRESS_DB_NAME: wordpress
-    
-      db:
-        container_name: wordpress-mariadb
-        image: mariadb:10.7.1
-        ports: 
-          - 3306:3306
-        networks:
-          - wordpress_network
-        volumes:
-          - mariadb_volume:/var/lib/mysql
-        environment:
-          MARIADB_DATABASE: wordpress
-          MARIADB_USER: wordpressuser
-          MARIADB_PASSWORD: wordpresspwd
-          MARIADB_ROOT_PASSWORD: wordpressrootpwd
-    
+~~~~YAML
+version: '3'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: db
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - MYSQL_DATABASE=wordpress
     volumes:
-      wordpress_volume:
-      mariadb_volume:
-    
+      - dbdata:/var/lib/mysql
+    command: '--default-authentication-plugin=mysql_native_password'
     networks:
-      wordpress_network:
-        driver: bridge
+      - app-network
+
+  wordpress:
+    depends_on:
+      - db
+    image: wordpress:php8.1-fpm-alpine
+    container_name: wordpress
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - WORDPRESS_DB_HOST=db:3306
+      - WORDPRESS_DB_USER=$MYSQL_USER
+      - WORDPRESS_DB_PASSWORD=$MYSQL_PASSWORD
+      - WORDPRESS_DB_NAME=wordpress
+    volumes:
+      - wordpress:/var/www/html
+    networks:
+      - app-network
+
+  webserver:
+    depends_on:
+      - wordpress
+    image: nginx:1.23.0-alpine
+    container_name: webserver
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - wordpress:/var/www/html
+      - ./nginx-conf:/etc/nginx/conf.d
+    networks:
+      - app-network
+
+volumes:
+  wordpress:
+  dbdata:
+
+networks:
+  app-network:
+    driver: bridge  
+~~~~
 
 ## Realizando teste com o *Docker Compose*
 
@@ -69,16 +82,12 @@ Para realização dos testes com script configurado no arquivo `docker-compose`,
 Após a execução do comando teremos os seguintes containers em execução:
 
 ~~~~bash
-fernando@debian10x64:~/cursos/kubedev/aula56-Desafio-Docker/questao5/desafio-docker-questao5-wordpress$ docker ps
-CONTAINER ID   IMAGE                 COMMAND                  CREATED          STATUS          PORTS                                       NAMES
-c45c076c36d7   wordpress:5.8.3       "docker-entrypoint.s…"   15 minutes ago   Up 15 minutes   0.0.0.0:8080->80/tcp, :::8080->80/tcp       wordpress-app
-eddf86294f5f   mariadb:10.7.1        "docker-entrypoint.s…"   21 minutes ago   Up 15 minutes   0.0.0.0:3306->3306/tcp, :::3306->3306/tcp   wordpress-mariadb
-4e0cc1b8a495   portainer/portainer   "/portainer"             5 days ago       Up 2 hours      0.0.0.0:9000->9000/tcp, :::9000->9000/tcp   frosty_easley
-fernando@debian10x64:~/cursos/kubedev/aula56-Desafio-Docker/questao5/desafio-docker-questao5-wordpress$
+$ docker ps
+CONTAINER ID   IMAGE                         COMMAND                  CREATED         STATUS         PORTS                               NAMES
+29d3185ec5e7   nginx:1.23.0-alpine           "/docker-entrypoint.…"   2 minutes ago   Up 2 minutes   0.0.0.0:80->80/tcp, :::80->80/tcp   webserver
+bb0a51b82cea   wordpress:php8.1-fpm-alpine   "docker-entrypoint.s…"   2 minutes ago   Up 2 minutes   9000/tcp                            wordpress
+a4851ac1609d   mysql:8.0                     "docker-entrypoint.s…"   2 minutes ago   Up 2 minutes   3306/tcp, 33060/tcp                 db
 ~~~~
 
 A aplicação pode ser acessada através da URL:
-http://localhost:8080
-
-
-
+<http://localhost:80>
