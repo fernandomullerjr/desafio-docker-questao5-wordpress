@@ -1,54 +1,93 @@
 
-# WordPress Docker Container
+# Questão 05 - Desafio Wordpress
 
-Lightweight WordPress container with Nginx 1.22 & PHP-FPM 8.0 based on Alpine Linux.
+Chegou um cliente pra você que possui todas as suas aplicações em data centers e a gestão dessas aplicações está cada vez mais complexa então pra iniciar um plano de
+gestão unificada e migração pra um ambiente cloud, as aplicações serão migradas pra containers. E hoje você precisa iniciar esse processo com um projeto piloto, o portal de
+conteúdos da empresa construido em Wordpress. Então hoje sua missão é criar esse ambiente wordpress pronto para a equipe de publicidade começar a popular.
 
-_WordPress version currently installed:_ **6.0**
+## Wordpress
 
-* Used in production for many sites, making it stable, tested and up-to-date
-* Optimized for 100 concurrent users
-* Optimized to only use resources when there's traffic (by using PHP-FPM's ondemand PM)
-* Works with Amazon Cloudfront or CloudFlare as SSL terminator and CDN
-* Multi-platform, supporting AMD4, ARMv6, ARMv7, ARM64
-* Built on the lightweight Alpine Linux distribution
-* Small Docker image size (+/-90MB)
-* Uses PHP 8.0 for better performance, lower cpu usage & memory footprint
-* Can safely be updated without losing data
-* Fully configurable because wp-config.php uses the environment variables you can pass as an argument to the container
+O Wordpress é uma aplicação CMS (Content Management System) que é usado para administrar sites, blogs, lojas virtuais, portais de notícia, áreas de membros e outros tipos de página.
 
-[![Docker Pulls](https://img.shields.io/docker/pulls/trafex/wordpress.svg)](https://hub.docker.com/r/trafex/wordpress/)
-![nginx 1.20](https://img.shields.io/badge/nginx-1.22-brightgreen.svg)
-![php 8.0](https://img.shields.io/badge/php-8.0-brightgreen.svg)
-![License MIT](https://img.shields.io/badge/license-MIT-blue.svg)
+## Criando a aplicação em uma única linha de comando
 
-## [![Trafex Consultancy](https://timdepater.com/logo/mini-logo.png)](https://timdepater.com?mtm_campaign=github)
-I can help you with [Containerization, Kubernetes, Monitoring, Infrastructure as Code and other DevOps challenges](https://timdepater.com/?mtm_campaign=github).
+Para criação da aplicação (site e banco de dados) vamos utilizar o *Docker Compose*, onde vamos criar e executar o container da aplicação e criar e executar o container com o banco de dados da aplicação.
 
-## Usage
-See [docker-compose.yml](https://github.com/TrafeX/docker-wordpress/blob/master/docker-compose.yml) how to use it in your own environment.
+Foi criado, dentro do diretório, um arquivo chamado `docker-compose` contendo o script *yaml* de criação dos objetos necessários para execução da aplicação e do banco de dados, como mostrado abaixo:
 
-    docker-compose up
+~~~~YAML
+version: '3'
 
-Or
+services:
+  db:
+    image: mysql:8.0
+    container_name: db
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - MYSQL_DATABASE=wordpress
+    volumes:
+      - dbdata:/var/lib/mysql
+    command: '--default-authentication-plugin=mysql_native_password'
+    networks:
+      - app-network
 
-    docker run -d -p 80:80 -v /local/folder:/var/www/wp-content \
-    -e "DB_HOST=db" \
-    -e "DB_NAME=wordpress" \
-    -e "DB_USER=wp" \
-    -e "DB_PASSWORD=secret" \
-    -e "FS_METHOD=direct" \
-    trafex/wordpress
+  wordpress:
+    depends_on:
+      - db
+    image: wordpress:php8.1-fpm-alpine
+    container_name: wordpress
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - WORDPRESS_DB_HOST=db:3306
+      - WORDPRESS_DB_USER=$MYSQL_USER
+      - WORDPRESS_DB_PASSWORD=$MYSQL_PASSWORD
+      - WORDPRESS_DB_NAME=wordpress
+    volumes:
+      - wordpress:/var/www/html
+    networks:
+      - app-network
 
-### WP-CLI
+  webserver:
+    depends_on:
+      - wordpress
+    image: nginx:1.23.0-alpine
+    container_name: webserver
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - wordpress:/var/www/html
+      - ./nginx-conf:/etc/nginx/conf.d
+    networks:
+      - app-network
 
-This image includes [wp-cli](https://wp-cli.org/) which can be used like this:
+volumes:
+  wordpress:
+  dbdata:
 
-    docker exec <your container name> /usr/local/bin/wp --path=/usr/src/wordpress <your command>
+networks:
+  app-network:
+    driver: bridge  
+~~~~
 
+## Realizando teste com o *Docker Compose*
 
-## Inspired by
+Para realização dos testes com script configurado no arquivo `docker-compose`, executamos o seguinte comando:
 
-* https://hub.docker.com/_/wordpress/
-* https://codeable.io/wordpress-developers-intro-to-docker-part-two/
-* https://github.com/TrafeX/docker-php-nginx/
-* https://github.com/etopian/alpine-php-wordpress
+    docker-compose up -d
+
+> Esse comando é para criar todos os objetos configurados no arquivo `docker-compose`.
+Após a execução do comando teremos os seguintes containers em execução:
+
+~~~~bash
+$ docker ps
+CONTAINER ID   IMAGE                         COMMAND                  CREATED         STATUS         PORTS                               NAMES
+29d3185ec5e7   nginx:1.23.0-alpine           "/docker-entrypoint.…"   2 minutes ago   Up 2 minutes   0.0.0.0:80->80/tcp, :::80->80/tcp   webserver
+bb0a51b82cea   wordpress:php8.1-fpm-alpine   "docker-entrypoint.s…"   2 minutes ago   Up 2 minutes   9000/tcp                            wordpress
+a4851ac1609d   mysql:8.0                     "docker-entrypoint.s…"   2 minutes ago   Up 2 minutes   3306/tcp, 33060/tcp                 db
+~~~~
+
+A aplicação pode ser acessada através da URL:
+<http://localhost:80>
