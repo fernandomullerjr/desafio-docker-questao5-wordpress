@@ -79,6 +79,7 @@ Para realização dos testes com script configurado no arquivo `docker-compose`,
     docker-compose up -d
 
 > Esse comando é para criar todos os objetos configurados no arquivo `docker-compose`.
+
 Após a execução do comando teremos os seguintes containers em execução:
 
 ~~~~bash
